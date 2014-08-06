@@ -20,7 +20,7 @@ public:
     Rcpp::Reference hash_file(std::string path, int type); // git_repository_hashfile,
     Rcpp::Reference head();
     bool head_detached();
-    bool head_orphan();
+    //bool head_orphan();
     Rcpp::Reference index();
     // git_repository_init_ext,
     bool is_bare();
@@ -33,8 +33,8 @@ public:
     // git_repository_open_ext,
     std::string path();
     // git_repository_set_config,
-    void set_head(std::string refname);
-    void set_head_detached(SEXP oid);
+    void set_head(std::string refname, SEXP s_author, std::string message);
+    void set_head_detached(SEXP oid, SEXP s_author, std::string message);
     // git_repository_set_index,
     // git_repository_set_odb,
     // git_repository_set_workdir,

@@ -10,7 +10,8 @@ GitReference::GitReference(git_reference *_ref)
 
 bool GitReference::has_log()
 {
-    return git_reference_has_log(ref.get());
+    throw Rcpp::exception("GitReference::has_log no longer works (since it requries repo)");
+    //    return git_reference_has_log(ref.get());
 }
 
 SEXP GitReference::peel(unsigned int otype)

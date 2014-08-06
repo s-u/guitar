@@ -47,10 +47,12 @@ bool Repository::head_detached()
     return git_repository_head_detached(repo.get());
 }
 
+/* no longer exists
 bool Repository::head_orphan()
 {
     return git_repository_head_orphan(repo.get());
 }
+*/
 
 Rcpp::Reference Repository::index()
 {
@@ -85,17 +87,24 @@ std::string Repository::path()
     return std::string(git_repository_path(repo.get()));
 }
 
-void Repository::set_head(std::string refname)
+void Repository::set_head(std::string refname, SEXP author_s, std::string message)
 {
-    int err = git_repository_set_head(repo.get(), refname.c_str());
+    git_signature *author = Signature::from_sexp(author_s);
+
+    int err = git_repository_set_head(repo.get(), refname.c_str(), author, message.c_str());
+    git_signature_free(author);
+
     if (err)
         throw Rcpp::exception("set_head failed");
 }
 
-void Repository::set_head_detached(SEXP _oid)
+void Repository::set_head_detached(SEXP _oid, SEXP author_s, std::string message)
 {
     const git_oid *oid = OID::from_sexp(_oid);
-    int err = git_repository_set_head_detached(repo.get(), oid);
+    git_signature *author = Signature::from_sexp(author_s);
+    int err = git_repository_set_head_detached(repo.get(), oid, author, message.c_str());
+    git_signature_free(author);
+
     if (err)
         throw Rcpp::exception("set_head detached failed");
 }
@@ -135,11 +144,11 @@ Rcpp::Reference Repository::name_to_id(std::string name)
     END_RCPP
 }
 
-SEXP Repository::reference_list(unsigned int flags)
+SEXP Repository::reference_list(unsigned int flags) /* FIXME: flags are now unused */
 {
     BEGIN_RCPP
     git_strarray result;
-    int err = git_reference_list(&result, repo.get(), flags);
+    int err = git_reference_list(&result, repo.get());
     if (err) {
         git_strarray_free(&result);
         throw Rcpp::exception("Repository::reference_list error");
@@ -221,7 +230,7 @@ RCPP_MODULE(guitar_repository) {
         .method("hash_file", &Repository::hash_file)
         .method("head", &Repository::head)
         .method("head_detached", &Repository::head_detached)
-        .method("head_orphan", &Repository::head_orphan)
+	//        .method("head_orphan", &Repository::head_orphan)
         .method("index", &Repository::index)
         .method("is_bare", &Repository::is_bare)
         .method("is_empty", &Repository::is_empty)

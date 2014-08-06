@@ -50,7 +50,10 @@ Rcpp::Reference Tree::entry_by_index(size_t idx)
         const git_tree_entry *entry = git_tree_entry_byindex(tree.get(), idx);
     if (entry == NULL)
         throw Rcpp::exception("entry not found");
-    git_tree_entry *dup = git_tree_entry_dup(entry);
+    git_tree_entry *dup;
+    int err = git_tree_entry_dup(&dup, entry);
+    if (err)
+	throw Rcpp::exception("entry duplication failed");
     return TreeEntry::create(dup);
     END_RCPP
 }
@@ -61,7 +64,10 @@ Rcpp::Reference Tree::entry_by_name(std::string name)
     const git_tree_entry *entry = git_tree_entry_byname(tree.get(), name.c_str());
     if (entry == NULL)
         throw Rcpp::exception("entry not found");
-    git_tree_entry *dup = git_tree_entry_dup(entry);
+    git_tree_entry *dup;
+    int err = git_tree_entry_dup(&dup, entry);
+    if (err)
+        throw Rcpp::exception("entry duplication failed");
     return TreeEntry::create(dup);
     END_RCPP
 }
@@ -80,10 +86,13 @@ Rcpp::Reference Tree::entry_by_path(std::string name)
 Rcpp::Reference Tree::entry_by_oid(SEXP oid)
 {
     BEGIN_RCPP
-    const git_tree_entry *entry = git_tree_entry_byoid(tree.get(), OID::from_sexp(oid));
+    const git_tree_entry *entry = git_tree_entry_byid(tree.get(), OID::from_sexp(oid));
     if (entry == NULL)
         throw Rcpp::exception("entry not found");
-    git_tree_entry *dup = git_tree_entry_dup(entry);
+    git_tree_entry *dup;
+    int err = git_tree_entry_dup(&dup, entry);
+    if (err)
+        throw Rcpp::exception("entry duplication failed");
     return TreeEntry::create(dup);
     END_RCPP
 }
