@@ -13,7 +13,7 @@ Index::Index(git_index *_ix)
 SEXP Index::read()
 {
     BEGIN_RCPP
-    int result = git_index_read(ix.get());
+    int result = git_index_read(ix.get(), 0);
     if (result) {
         throw Rcpp::exception("Index::read error");
     }
@@ -86,12 +86,12 @@ namespace IndexEntry {
                                   Rcpp::Named("nanoseconds") = time->nanoseconds);
     }
     Rcpp::List create(const git_index_entry *entry) {
-        SEXP oid = OID::create(&entry->oid);
+        SEXP oid = OID::create(&entry->id);
         return Rcpp::List::create(Rcpp::Named("ctime") = index_time(&entry->ctime),
                                   Rcpp::Named("mtime") = index_time(&entry->mtime),
                                   Rcpp::Named("dev") = entry->dev,
                                   Rcpp::Named("ino") = entry->ino,
-                                  Rcpp::Named("mode") = entry->mode,
+                                  Rcpp::Named("moe") = entry->mode,
                                   Rcpp::Named("uid") = entry->uid,
                                   Rcpp::Named("gid") = entry->gid,
                                   Rcpp::Named("file_size") = (long) entry->file_size,
