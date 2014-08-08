@@ -196,6 +196,8 @@ void Repository::create_commit(std::string update_ref,
 {
     Rcpp::List parents_l(Rcpp::as<Rcpp::List>(parents));
     std::vector<const git_commit *> parents_v(parents_l.size());
+    const char *msg_enc = message_encoding.c_str();
+    if (!*msg_enc) msg_enc = NULL; /* map "" to NULL which is the UTF-8 default */
 
     for (size_t i=0; i<parents_l.size(); ++i) {
         parents_v[i] = Commit::from_sexp(parents_l[i]);
@@ -209,7 +211,7 @@ void Repository::create_commit(std::string update_ref,
                                 repo.get(),
                                 update_ref.c_str(),
                                 author, committer,
-                                message_encoding.c_str(), message.c_str(),
+                                msg_enc, message.c_str(),
                                 Tree::from_sexp(tree),
                                 parents_v.size(),
                                 &parents_v[0]);
