@@ -232,7 +232,8 @@ SEXP Repository::commits(SEXP soid)
     // FIXME: this will leak on error - which can happen if any allocation fails
     git_revwalk_free(walk);
     UNPROTECT(1);
-    return head;
+    // first entry is intentionally left blank - skip it
+    return CDR(head);
     END_RCPP
 }
 
