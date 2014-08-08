@@ -35,6 +35,17 @@ Rcpp::Reference Repository::hash_file(std::string path, int type)
     return OID::create(&out);
 }
 
+Rcpp::Reference Repository::hash_buffer(SEXP s_buf)
+{
+    if (TYPEOF(s_buf) != RAWSXP)
+	throw Rcpp::exception("contents must be a raw vector");
+    git_oid out;
+    int err = git_blob_create_frombuffer(&out, repo.get(), RAW(s_buf), LENGTH(s_buf));
+    if (err)
+        throw Rcpp::exception("create_blob failed");
+    return OID::create(&out);
+}
+
 Rcpp::Reference Repository::head()
 {
     git_reference *ref;
@@ -228,6 +239,7 @@ RCPP_MODULE(guitar_repository) {
     class_<Repository>("Repository")
         .constructor<std::string>()
         .method("hash_file", &Repository::hash_file)
+        .method("hash_buffer", &Repository::hash_buffer)
         .method("head", &Repository::head)
         .method("head_detached", &Repository::head_detached)
 	//        .method("head_orphan", &Repository::head_orphan)

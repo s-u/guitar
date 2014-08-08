@@ -18,6 +18,7 @@ public:
     // git_repository_discover,
     // git_repository_fetchhead_foreach,
     Rcpp::Reference hash_file(std::string path, int type); // git_repository_hashfile,
+    Rcpp::Reference hash_buffer(SEXP s_buf); // blob_create_frombuffer
     Rcpp::Reference head();
     bool head_detached();
     //bool head_orphan();
