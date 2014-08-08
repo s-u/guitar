@@ -5,6 +5,7 @@
 #include "oid.h"
 #include "odb.h"
 #include "tree.h"
+#include "time.h"
 #include "commit.h"
 #include <iostream>
 
@@ -186,6 +187,55 @@ SEXP Repository::object_lookup(SEXP soid, int otype)
     END_RCPP
 }
 
+static Rcpp::List sig2SEXP(const git_signature *sig) {
+    return Rcpp::List::create(Rcpp::Named("name") = std::string(sig->name),
+			      Rcpp::Named("email") = std::string(sig->email),
+			      Rcpp::Named("when") = (double) sig->when.time);
+}
+
+static Rcpp::List commit2SEXP(const git_commit *c)
+{
+    return Rcpp::List::create(Rcpp::Named("message") = std::string(git_commit_message(c)),
+			      Rcpp::Named("author") = sig2SEXP(git_commit_author(c)),
+			      Rcpp::Named("committer") = sig2SEXP(git_commit_committer(c)),
+			      Rcpp::Named("id") = OID::fmt(git_commit_id(c)),
+			      Rcpp::Named("time") = (double) git_commit_time(c),
+			      Rcpp::Named("time.offset") = git_commit_time_offset(c),
+			      Rcpp::Named("parent.count") = git_commit_parentcount(c));
+}
+
+SEXP Repository::commits(SEXP soid)
+{
+    BEGIN_RCPP
+    const git_oid *oid = (soid == R_NilValue) ? NULL : OID::from_sexp(soid);
+    git_oid cc;
+    git_revwalk *walk;
+    int err = git_revwalk_new(&walk, repo.get());
+    if (err)
+	throw Rcpp::exception("cannot create a revision walker object");
+    err = oid ? git_revwalk_push(walk, oid) : git_revwalk_push_head(walk);
+    if (err) {
+	git_revwalk_free(walk);
+	throw Rcpp::exception("failed to find specified starting commit");
+    }
+    SEXP head = PROTECT(Rf_list1(R_NilValue)), tail = head;
+    while (!git_revwalk_next(&cc, walk)) {
+	git_commit *com;
+	if (git_commit_lookup(&com, repo.get(), &cc)) {
+	    git_revwalk_free(walk);
+	    throw Rcpp::exception("failed to retrieve a commit during walk");
+	}
+	SEXP new_tail = Rf_list1(commit2SEXP(com));
+	SETCDR(tail, new_tail);
+	tail = new_tail;
+    }
+    // FIXME: this will leak on error - which can happen if any allocation fails
+    git_revwalk_free(walk);
+    UNPROTECT(1);
+    return head;
+    END_RCPP
+}
+
 void Repository::create_commit(std::string update_ref,
                                SEXP author_s,
                                SEXP committer_s,
@@ -257,6 +307,7 @@ RCPP_MODULE(guitar_repository) {
         .method("name_to_id", &Repository::name_to_id)
         .method("reference_list", &Repository::reference_list)
         .method("create_commit", &Repository::create_commit)
+	.method("commits", &Repository::commits)
         ;
     function("repository_init", &repository_init);
 };

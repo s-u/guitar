@@ -60,6 +60,8 @@ public:
                        SEXP tree,
                        SEXP parents);
 
+    SEXP commits(SEXP soid); // uses revwalker to walk commits from the OID or HEAD if NULL
+
     git_repository *unwrap() { return repo.get(); }
 
 protected:
