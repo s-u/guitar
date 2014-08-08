@@ -59,6 +59,41 @@ void Index::clear()
     git_index_clear(ix.get());
 }
 
+struct entry_internal {
+    git_index_entry entry;
+    char path[1];
+};
+
+void Index::add(SEXP s_entry)
+{
+    git_index_entry *e;
+    entry_internal *ei;
+    Rcpp::List el(s_entry);
+    if (!el.containsElementNamed("path") || !el.containsElementNamed("oid"))
+	throw Rcpp::exception("index entry must contain at least a path and oid");
+    std::string path = el["path"];
+    int p_len = strlen(path.c_str());
+    int mode = 33188; // 100644
+    SEXP s_oid = el["oid"];
+    const git_oid *oid = OID::from_sexp(s_oid);
+    if (el.containsElementNamed("mode"))
+	mode = el["mode"];
+    ei = (entry_internal*) malloc(sizeof(entry_internal) + p_len + 2);
+    if (!ei)
+	throw Rcpp::exception("cannot allocate index entry object");
+    e = &ei->entry;
+    memset(e, 0, sizeof(git_index_entry));
+    strcpy((char*) ei->path, path.c_str());
+    e->path = ei->path;
+    e->mode = mode;
+    e->flags = p_len & GIT_IDXENTRY_NAMEMASK;
+    if (el.containsElementNamed("uid"))
+	e->uid = (int) el["uid"];
+    if (el.containsElementNamed("gid"))
+	e->gid = (int) el["gid"];
+    e->id = *oid;
+}
+
 void Index::add_by_path(std::string path)
 {
     int err = git_index_add_bypath(ix.get(), path.c_str());
@@ -81,9 +116,11 @@ void Index::remove_directory(std::string path, int stage)
 }
 
 namespace IndexEntry {
-    Rcpp::List index_time(const git_index_time *time) {
-        return Rcpp::List::create(Rcpp::Named("seconds") = (long) time->seconds,
-                                  Rcpp::Named("nanoseconds") = time->nanoseconds);
+    double index_time(const git_index_time *time) {
+	double t = (double) time->seconds;
+	double t2 = (double) time->nanoseconds;
+	t += t2 / 1000000000.0;
+	return t;
     }
     Rcpp::List create(const git_index_entry *entry) {
         SEXP oid = OID::create(&entry->id);
@@ -91,10 +128,10 @@ namespace IndexEntry {
                                   Rcpp::Named("mtime") = index_time(&entry->mtime),
                                   Rcpp::Named("dev") = entry->dev,
                                   Rcpp::Named("ino") = entry->ino,
-                                  Rcpp::Named("moe") = entry->mode,
+                                  Rcpp::Named("mode") = entry->mode,
                                   Rcpp::Named("uid") = entry->uid,
                                   Rcpp::Named("gid") = entry->gid,
-                                  Rcpp::Named("file_size") = (long) entry->file_size,
+                                  Rcpp::Named("file_size") = (double) entry->file_size,
                                   Rcpp::Named("oid") = oid,
                                   Rcpp::Named("flags") = entry->flags,
                                   Rcpp::Named("flags_extended") = entry->flags_extended,
@@ -123,6 +160,7 @@ RCPP_MODULE(guitar_index) {
         .method("write_tree", &Index::write_tree)
         .method("entrycount", &Index::entrycount)
         .method("clear", &Index::clear)
+	.method("add", &Index::add)
         .method("add_by_path", &Index::add_by_path)
         .method("remove_by_path", &Index::remove_by_path)
         .method("remove_directory", &Index::remove_directory)

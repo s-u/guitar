@@ -17,6 +17,7 @@ public:
     size_t entrycount(); // git_index_entrycount
     void clear(); // git_index_clear;
 
+    void add(SEXP s_entry);
     void add_by_path(std::string path);
     void remove_by_path(std::string path);
     void remove_directory(std::string path, int stage);
