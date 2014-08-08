@@ -36,12 +36,12 @@ static int walk_cb(const char *root, const git_tree_entry *entry, void *payload)
 
 int Tree::walk_pre(Rcpp::Function fcall)
 {
-    git_tree_walk(tree.get(), GIT_TREEWALK_PRE, &walk_cb, &fcall);
+    return git_tree_walk(tree.get(), GIT_TREEWALK_PRE, &walk_cb, &fcall);
 }
 
 int Tree::walk_post(Rcpp::Function fcall)
 {
-    git_tree_walk(tree.get(), GIT_TREEWALK_POST, &walk_cb, &fcall);
+    return git_tree_walk(tree.get(), GIT_TREEWALK_POST, &walk_cb, &fcall);
 }
 
 Rcpp::Reference Tree::entry_by_index(size_t idx)
