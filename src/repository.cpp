@@ -8,8 +8,6 @@
 #include "commit.h"
 #include <iostream>
 
-using namespace std;
-
 /******************************************************************************/
 Repository::Repository(git_repository *_repo)
 {

@@ -8,7 +8,6 @@
 #include <iostream>
 
 using namespace Rcpp;
-using namespace std;
 
 SEXP object_to_sexp(git_object *obj)
 {
