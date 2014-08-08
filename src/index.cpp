@@ -92,6 +92,9 @@ void Index::add(SEXP s_entry)
     if (el.containsElementNamed("gid"))
 	e->gid = (int) el["gid"];
     e->id = *oid;
+    int err = git_index_add(ix.get(), e);
+    if (err)
+	throw Rcpp::exception("add failed");
 }
 
 void Index::add_by_path(std::string path)
