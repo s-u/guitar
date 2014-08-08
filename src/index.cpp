@@ -119,11 +119,11 @@ void Index::remove_directory(std::string path, int stage)
 }
 
 namespace IndexEntry {
-    double index_time(const git_index_time *time) {
+    Rcpp::Datetime index_time(const git_index_time *time) {
 	double t = (double) time->seconds;
 	double t2 = (double) time->nanoseconds;
 	t += t2 / 1000000000.0;
-	return t;
+	return Rcpp::Datetime(t);
     }
     Rcpp::List create(const git_index_entry *entry) {
         SEXP oid = OID::create(&entry->id);

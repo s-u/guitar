@@ -190,7 +190,7 @@ SEXP Repository::object_lookup(SEXP soid, int otype)
 static Rcpp::List sig2SEXP(const git_signature *sig) {
     return Rcpp::List::create(Rcpp::Named("name") = std::string(sig->name),
 			      Rcpp::Named("email") = std::string(sig->email),
-			      Rcpp::Named("when") = (double) sig->when.time);
+			      Rcpp::Named("when") = Rcpp::Datetime((double) sig->when.time));
 }
 
 static Rcpp::List commit2SEXP(const git_commit *c)
@@ -199,7 +199,7 @@ static Rcpp::List commit2SEXP(const git_commit *c)
 			      Rcpp::Named("author") = sig2SEXP(git_commit_author(c)),
 			      Rcpp::Named("committer") = sig2SEXP(git_commit_committer(c)),
 			      Rcpp::Named("id") = OID::fmt(git_commit_id(c)),
-			      Rcpp::Named("time") = (double) git_commit_time(c),
+			      Rcpp::Named("time") = Rcpp::Datetime((double) git_commit_time(c)),
 			      Rcpp::Named("time.offset") = git_commit_time_offset(c),
 			      Rcpp::Named("parent.count") = git_commit_parentcount(c));
 }
