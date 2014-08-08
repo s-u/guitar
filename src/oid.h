@@ -17,6 +17,8 @@ public:
     operator const git_oid *() const { return unwrap(); }
     const git_oid *unwrap() const { return &oid; }
 
+    static std::string fmt(const git_oid *oid);
+
 protected:
     git_oid oid;
 };

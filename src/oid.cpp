@@ -21,12 +21,16 @@ OID::OID(std::string str)
         throw Rcpp::exception("bad string for OID constructor");
 }
 
-std::string OID::fmt()
-{
+std::string OID::fmt(const git_oid *oid_) {
     std::string out(41,' ');
     out[40] = '\0';
-    git_oid_fmt((char*) &out[0], &oid);
+    git_oid_fmt((char*) &out[0], oid_);
     return out;
+}
+
+std::string OID::fmt()
+{
+    return fmt(&oid);
 }
 
 RCPP_MODULE(guitar_oid) {
