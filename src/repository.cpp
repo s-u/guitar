@@ -285,7 +285,7 @@ Rcpp::Reference repository_init(std::string path, bool is_bare)
     END_RCPP
 }
 
-Rcpp::Reference Repository::clone(std::string url, std::string dst, bool bare, bool hardlinks)
+Rcpp::Reference repository_clone(std::string url, std::string dst, bool bare, bool hardlinks)
 {
     BEGIN_RCPP
     git_repository *_repo = NULL;
@@ -328,5 +328,5 @@ RCPP_MODULE(guitar_repository) {
 	.method("commits", &Repository::commits)
         ;
     function("repository_init", &repository_init);
-    function("clone", &Repository::clone);
+    function("repository_clone", &repository_clone);
 };
