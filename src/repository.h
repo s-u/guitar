@@ -44,6 +44,8 @@ public:
     std::string workdir();
     // git_repository_wrap_odb,
 
+    static Rcpp::Reference clone(std::string url, std::string dst, bool bare, bool hardlinks=true);
+
     Rcpp::Reference reference_lookup(std::string name); // returns a GitReference object
     Rcpp::Reference name_to_id(std::string name); // returns a OID object
     SEXP reference_list(unsigned int flags); // returns a list of characters

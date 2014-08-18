@@ -285,6 +285,23 @@ Rcpp::Reference repository_init(std::string path, bool is_bare)
     END_RCPP
 }
 
+Rcpp::Reference Repository::clone(std::string url, std::string dst, bool bare, bool hardlinks)
+{
+    BEGIN_RCPP
+    git_repository *_repo = NULL;
+    git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+    opts.bare = bare;
+    if (!strncmp(url.c_str(), "file://", 7))
+	opts.local = hardlinks ? GIT_CLONE_LOCAL : GIT_CLONE_LOCAL_NO_LINKS;
+    int err = git_clone(&_repo, url.c_str(), dst.c_str(), &opts);
+    if (err)
+        throw Rcpp::exception("git_clone failed");
+    if (_repo == NULL)
+        throw Rcpp::exception("repository could not be retrieved");
+    return Repository::create(_repo);    
+    END_RCPP
+}
+
 RCPP_MODULE(guitar_repository) {
     using namespace Rcpp;
     class_<Repository>("Repository")
@@ -311,4 +328,5 @@ RCPP_MODULE(guitar_repository) {
 	.method("commits", &Repository::commits)
         ;
     function("repository_init", &repository_init);
+    function("clone", &Repository::clone);
 };
