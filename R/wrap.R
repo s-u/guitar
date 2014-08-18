@@ -1,7 +1,8 @@
 commit_HEAD_changes <- function(repository, changes, author, message) {
   if (is.character(repository)) repository <- Repository$new(repository)
   index = repository$index()
-  index$read_tree(repository$head()$peel(GIT_OBJ_TREE))
+  if (! repository$is_empty())
+    index$read_tree(repository$head()$peel(GIT_OBJ_TREE))
   for (i in seq.int(length(changes))) {
     o = changes[[i]]
     fn = names(changes)[i]
