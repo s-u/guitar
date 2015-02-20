@@ -7,6 +7,7 @@
 #include "tree.h"
 #include "time.h"
 #include "commit.h"
+#include "gexception.h"
 #include <iostream>
 
 /******************************************************************************/
@@ -20,7 +21,7 @@ Repository::Repository(std::string path)
     git_repository *_repo;
     int err = git_repository_open(&_repo, path.c_str());
     if (err)
-        throw Rcpp::exception("Repository not found");
+        throw GitException("opening a repository");
     
     repo = boost::shared_ptr<git_repository>(_repo, git_repository_free);
 }
@@ -30,7 +31,7 @@ Rcpp::Reference Repository::hash_file(std::string path, int type)
     git_oid out;
     int err = git_repository_hashfile(&out, repo.get(), path.c_str(), (git_otype) type, path.c_str());
     if (err)
-        throw Rcpp::exception("hash_file failed");
+        throw GitException("hash_file");
     return OID::create(&out);
 }
 
@@ -41,7 +42,7 @@ Rcpp::Reference Repository::hash_buffer(SEXP s_buf)
     git_oid out;
     int err = git_blob_create_frombuffer(&out, repo.get(), RAW(s_buf), LENGTH(s_buf));
     if (err)
-        throw Rcpp::exception("create_blob failed");
+        throw GitException("create_blob");
     return OID::create(&out);
 }
 
@@ -87,7 +88,7 @@ Rcpp::Reference Repository::odb()
     git_odb *odb;
     int result = git_repository_odb(&odb, repo.get());
     if (result)
-        throw Rcpp::exception("Repository::odb error");
+        throw GitException("Repository::odb");
     return Rcpp::internal::make_new_object(new ODB(odb));
     END_RCPP
 }
@@ -105,7 +106,7 @@ void Repository::set_head(std::string refname, SEXP author_s, std::string messag
     git_signature_free(author);
 
     if (err)
-        throw Rcpp::exception("set_head failed");
+        throw GitException("set_head");
 }
 
 void Repository::set_head_detached(SEXP _oid, SEXP author_s, std::string message)
@@ -116,7 +117,7 @@ void Repository::set_head_detached(SEXP _oid, SEXP author_s, std::string message
     git_signature_free(author);
 
     if (err)
-        throw Rcpp::exception("set_head detached failed");
+        throw GitException("set_head detached");
 }
 
 int Repository::state()
@@ -136,7 +137,7 @@ Rcpp::Reference Repository::reference_lookup(std::string name)
     git_reference *ref;
     int result = git_reference_lookup(&ref, repo.get(), name.c_str());
     if (result)
-        throw Rcpp::exception("Repository::lookup error");
+        throw GitException("Repository::lookup");
     return Rcpp::internal::make_new_object(new GitReference(ref));
     END_RCPP
 }
@@ -148,7 +149,7 @@ Rcpp::Reference Repository::name_to_id(std::string name)
     int result = git_reference_name_to_id((*oid), repo.get(), name.c_str());
     if (result) {
         delete oid;
-        throw Rcpp::exception("Repository::lookup error");
+        throw GitException("Repository::lookup");
     }
     return Rcpp::internal::make_new_object(oid);
     END_RCPP
@@ -161,7 +162,7 @@ SEXP Repository::reference_list(unsigned int flags) /* FIXME: flags are now unus
     int err = git_reference_list(&result, repo.get());
     if (err) {
         git_strarray_free(&result);
-        throw Rcpp::exception("Repository::reference_list error");
+        throw GitException("Repository::reference_list");
     }
     Rcpp::StringVector rresult(result.count);
     for (int i=0; i<result.count; ++i) {
@@ -179,9 +180,8 @@ SEXP Repository::object_lookup(SEXP soid, int otype)
     git_otype type = (git_otype) otype;
     git_object *obj;
     int err = git_object_lookup(&obj, repo.get(), oid, type);
-    if (err) {
-        throw Rcpp::exception("git_object_lookup failed");
-    }
+    if (err)
+      throw GitException("git_object_lookup");
     return object_to_sexp(obj);
     
     END_RCPP
@@ -212,18 +212,18 @@ SEXP Repository::commits(SEXP soid)
     git_revwalk *walk;
     int err = git_revwalk_new(&walk, repo.get());
     if (err)
-	throw Rcpp::exception("cannot create a revision walker object");
+	throw GitException("creating a revision walker");
     err = oid ? git_revwalk_push(walk, oid) : git_revwalk_push_head(walk);
     if (err) {
 	git_revwalk_free(walk);
-	throw Rcpp::exception("failed to find specified starting commit");
+	throw GitException("finding specified starting commit");
     }
     SEXP head = PROTECT(Rf_list1(R_NilValue)), tail = head;
     while (!git_revwalk_next(&cc, walk)) {
 	git_commit *com;
 	if (git_commit_lookup(&com, repo.get(), &cc)) {
 	    git_revwalk_free(walk);
-	    throw Rcpp::exception("failed to retrieve a commit during walk");
+	    throw GitException("retrieving a commit during walk");
 	}
 	SEXP new_tail = Rf_list1(commit2SEXP(com));
 	SETCDR(tail, new_tail);
@@ -269,7 +269,7 @@ void Repository::create_commit(std::string update_ref,
     git_signature_free(author);
     git_signature_free(committer);
     if (err)
-        throw Rcpp::exception("git_create_commit failed");
+        throw GitException("creating a git commit");
 }
 
 Rcpp::Reference repository_init(std::string path, bool is_bare)
@@ -277,10 +277,8 @@ Rcpp::Reference repository_init(std::string path, bool is_bare)
     BEGIN_RCPP
     git_repository *_repo = NULL;
     int err = git_repository_init(&_repo, path.c_str(), (unsigned) is_bare);
-    if (err)
-        throw Rcpp::exception("git_repository_init failed");
-    if (_repo == NULL)
-        throw Rcpp::exception("repository could not be created");
+    if (err || _repo == NULL)
+        throw GitException("creating a git repository");
     return Repository::create(_repo);
     END_RCPP
 }
@@ -295,7 +293,7 @@ Rcpp::Reference repository_clone(std::string url, std::string dst, bool bare, bo
 	opts.local = hardlinks ? GIT_CLONE_LOCAL : GIT_CLONE_LOCAL_NO_LINKS;
     int err = git_clone(&_repo, url.c_str(), dst.c_str(), &opts);
     if (err)
-        throw Rcpp::exception("git_clone failed");
+        throw GitException("cloning a repository");
     if (_repo == NULL)
         throw Rcpp::exception("repository could not be retrieved");
     return Repository::create(_repo);    
