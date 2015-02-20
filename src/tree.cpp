@@ -2,6 +2,7 @@
 #include "entry_points.h"
 #include "oid.h"
 #include "repository.h"
+#include "gexception.h"
 
 /******************************************************************************/
 // Tree
@@ -49,11 +50,11 @@ Rcpp::Reference Tree::entry_by_index(size_t idx)
     BEGIN_RCPP
         const git_tree_entry *entry = git_tree_entry_byindex(tree.get(), idx);
     if (entry == NULL)
-        throw Rcpp::exception("entry not found");
+        throw GitException("entry by index");
     git_tree_entry *dup;
     int err = git_tree_entry_dup(&dup, entry);
     if (err)
-	throw Rcpp::exception("entry duplication failed");
+	throw GitException("entry duplication");
     return TreeEntry::create(dup);
     END_RCPP
 }
@@ -63,11 +64,11 @@ Rcpp::Reference Tree::entry_by_name(std::string name)
     BEGIN_RCPP
     const git_tree_entry *entry = git_tree_entry_byname(tree.get(), name.c_str());
     if (entry == NULL)
-        throw Rcpp::exception("entry not found");
+        throw GitException("entry by name");
     git_tree_entry *dup;
     int err = git_tree_entry_dup(&dup, entry);
     if (err)
-        throw Rcpp::exception("entry duplication failed");
+        throw GitException("entry duplication failed");
     return TreeEntry::create(dup);
     END_RCPP
 }
@@ -78,7 +79,7 @@ Rcpp::Reference Tree::entry_by_path(std::string name)
     git_tree_entry *entry;
     int err = git_tree_entry_bypath(&entry, tree.get(), name.c_str());
     if (err)
-        throw Rcpp::exception("entry not found");
+        throw GitException("entry by path");
     return TreeEntry::create(entry);
     END_RCPP
 }
@@ -88,11 +89,11 @@ Rcpp::Reference Tree::entry_by_oid(SEXP oid)
     BEGIN_RCPP
     const git_tree_entry *entry = git_tree_entry_byid(tree.get(), OID::from_sexp(oid));
     if (entry == NULL)
-        throw Rcpp::exception("entry not found");
+        throw GitException("entry by OID");
     git_tree_entry *dup;
     int err = git_tree_entry_dup(&dup, entry);
     if (err)
-        throw Rcpp::exception("entry duplication failed");
+        throw GitException("entry duplication");
     return TreeEntry::create(dup);
     END_RCPP
 }
@@ -127,7 +128,7 @@ SEXP TreeEntry::object(SEXP _repo)
     git_object *result;
     int err = git_tree_entry_to_object(&result, repo, tree_entry.get());
     if (err)
-        throw Rcpp::exception("object lookup failed");
+        throw GitException("object lookup");
     return object_to_sexp(result);
     END_RCPP
 }

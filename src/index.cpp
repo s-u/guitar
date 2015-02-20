@@ -2,6 +2,7 @@
 #include "entry_points.h"
 #include "tree.h"
 #include "oid.h"
+#include "gexception.h"
 
 using namespace Rcpp;
 
@@ -15,7 +16,7 @@ SEXP Index::read()
     BEGIN_RCPP
     int result = git_index_read(ix.get(), 0);
     if (result) {
-        throw Rcpp::exception("Index::read error");
+        throw GitException("reading index");
     }
     return R_NilValue;
     END_RCPP
@@ -26,7 +27,7 @@ SEXP Index::write()
     BEGIN_RCPP
     int result = git_index_write(ix.get());
     if (result) {
-        throw Rcpp::exception("Index::write error");
+        throw GitException("writing index");
     }
     return R_NilValue;
     END_RCPP
@@ -37,7 +38,7 @@ void Index::read_tree(SEXP _tree)
     const git_tree *tree = Tree::from_sexp(_tree);
     int err = git_index_read_tree(ix.get(), tree);
     if (err)
-        throw Rcpp::exception("read_tree error");
+        throw GitException("reading index tree");
 }
 
 Rcpp::Reference Index::write_tree()
@@ -45,7 +46,7 @@ Rcpp::Reference Index::write_tree()
     git_oid result;
     int err = git_index_write_tree(&result, ix.get());
     if (err)
-        throw Rcpp::exception("write_tree error");
+        throw GitException("writing index tree");
     return OID::create(&result);
 }
 
@@ -94,28 +95,28 @@ void Index::add(SEXP s_entry)
     e->id = *oid;
     int err = git_index_add(ix.get(), e);
     if (err)
-	throw Rcpp::exception("add failed");
+	throw GitException("adding an index entry");
 }
 
 void Index::add_by_path(std::string path)
 {
     int err = git_index_add_bypath(ix.get(), path.c_str());
     if (err)
-        throw Rcpp::exception("add_by_path failed");
+        throw GitException("add to index by path");
 }
 
 void Index::remove_by_path(std::string path)
 {
     int err = git_index_remove_bypath(ix.get(), path.c_str());
     if (err)
-        throw Rcpp::exception("remove_by_path failed");
+      throw GitException("remove form index by path");
 }
 
 void Index::remove_directory(std::string path, int stage)
 {
     int err = git_index_remove_directory(ix.get(), path.c_str(), stage);
     if (err)
-        throw Rcpp::exception("remove_directory failed");
+        throw GitException("remove directory from index");
 }
 
 namespace IndexEntry {
@@ -145,14 +146,14 @@ namespace IndexEntry {
 Rcpp::List Index::get_by_index(size_t n) {
     const git_index_entry *result = git_index_get_byindex(ix.get(), n);
     if (result == NULL)
-        throw Rcpp::exception("get_by_index failed");
+        throw GitException("get by index");
     return IndexEntry::create(result);
 }
 
 Rcpp::List Index::get_by_path(std::string path, int stage) {
     const git_index_entry *result = git_index_get_bypath(ix.get(), path.c_str(), stage);
     if (result == NULL)
-        throw Rcpp::exception("get_by_path failed");
+        throw GitException("get by path");
     return IndexEntry::create(result);
 }
 
