@@ -32,7 +32,7 @@ test_that("repositories can be loaded", {
 })
 
 test_that("bad repositories throw", {
-  expect_that(new(guitar::Repository, "this should never work"), throws_error("Error : Repository not found"))
+  expect_that(new(guitar::Repository, "this should never work"), throws_error())
 })
 
 test_that("repositories have indices", {
