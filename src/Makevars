@@ -2,9 +2,6 @@ PKG_CPPFLAGS=-Ilibgit2/include -Ilibgit2
 PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` libgit2.a -lz
 LIBGIT2_SRC=$(wildcard libgit2/*.c)
 LIBGIT2_OBJ=$(LIBGIT2_SRC:%.c=%.o)
-ifeq ($(MAKEFLAGS),)
-     MAKEFLAGS=-j8
-endif
 
 all: libgit2.a $(SHLIB)
 
