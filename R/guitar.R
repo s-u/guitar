@@ -4,15 +4,28 @@
   # here.
   
   ## loadRcppModules();
-  ns <- asNamespace(pkgname);
-  description <- utils::packageDescription(pkgname, libname)
-  modules <- strsplit(description[["RcppModules"]], "[[:space:]]*,[[:space:]]*")[[1L]]
-  for (m in modules) {
-    mod <- Rcpp::Module(m, pkgname, mustStart = TRUE)
-    populate(mod, ns)
-    assign(Rcpp:::.moduleMetaName(m), mod, envir = ns)
-  }
+  ## ns <- asNamespace(pkgname);
+  ## description <- utils::packageDescription(pkgname, libname)
+  ## modules <- strsplit(description[["RcppModules"]], "[[:space:]]*,[[:space:]]*")[[1L]]
+  ## for (m in modules) {
+  ##   mod <- Rcpp::Module(m, pkgname, mustStart = TRUE)
+  ##   populate(mod, ns)
+  ##   assign(Rcpp:::.moduleMetaName(m), mod, envir = ns)
+  ## }
 }
+
+loadModule("guitar_blob", TRUE)
+loadModule("guitar_commit", TRUE)
+loadModule("guitar", TRUE)
+loadModule("guitar_index", TRUE)
+loadModule("guitar_odb", TRUE)
+loadModule("guitar_odb_object", TRUE)
+loadModule("guitar_oid", TRUE)
+loadModule("guitar_reference", TRUE)
+loadModule("guitar_repository", TRUE)
+loadModule("guitar_tag", TRUE)
+loadModule("guitar_tree", TRUE)
+loadModule("guitar_types", TRUE)
 
 # I need this for now because I know of no other way to access the
 # .pointer slot from Rcpp.
