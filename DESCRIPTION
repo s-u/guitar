@@ -1,7 +1,7 @@
 Package: guitar
 Type: Package
 Title: git bindings for R
-Version: 0.0.3
+Version: 0.0.3.1
 Author: Carlos Scheidegger
 Maintainer: Simon Urbanek <urbanek@research.att.com>
 Description: git bindings for R via libgit2
